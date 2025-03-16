@@ -1,48 +1,94 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace chương_trình_quick_short
+namespace Thuyet_trinh
 {
-    internal class Program
+    // Lớp Timing dùng để đo thời gian chạy của thuật toán
+    public class Timing
     {
-        // Hàm thực hiện thuật toán Quick Sort
+        TimeSpan startingTime; // Thời gian bắt đầu đo
+        TimeSpan duration; // Thời gian thực thi của thuật toán
+
+        public Timing()
+        {
+            startingTime = new TimeSpan(0);
+            duration = new TimeSpan(0);
+        }
+
+        // Dừng đo thời gian
+        public void StopTime()
+        {
+            duration = Process.GetCurrentProcess().Threads[0].UserProcessorTime.Subtract(startingTime);
+        }
+
+        // Bắt đầu đo thời gian
+        public void StartTime()
+        {
+            GC.Collect(); // Dọn dẹp bộ nhớ trước khi đo
+            GC.WaitForPendingFinalizers();
+            startingTime = Process.GetCurrentProcess().Threads[0].UserProcessorTime;
+        }
+
+        // Trả về thời gian thực thi của thuật toán
+        public TimeSpan Result()
+        {
+            return duration;
+        }
+    }
+
+    class Program
+    {
+        // Thuật toán Quick Sort
         static void QuickSort(int[] mang, int trai, int phai)
         {
             if (trai < phai)
             {
-                // Chia mảng thành hai phần bằng cách chọn phần tử chốt
+                // Phân hoạch mảng và lấy vị trí chốt
                 int chiSoChot = PhanHoach(mang, trai, phai);
 
-                // Sắp xếp phần bên trái của chốt
+                // Đệ quy sắp xếp phần bên trái của chốt
                 QuickSort(mang, trai, chiSoChot - 1);
 
-                // Sắp xếp phần bên phải của chốt
+                // Đệ quy sắp xếp phần bên phải của chốt
                 QuickSort(mang, chiSoChot + 1, phai);
             }
         }
 
-        // Hàm phân hoạch mảng dựa trên phần tử chốt
+        // Hàm chia mảng thành hai phần theo chốt
         static int PhanHoach(int[] mang, int trai, int phai)
         {
-            int chot = mang[phai]; // Chọn phần tử cuối cùng làm chốt
-            int i = trai - 1; // Vị trí của phần tử nhỏ hơn chốt
+            //3 trường hợp chốt
+            // Chốt là phần tử cuối cùng
+            int chot = mang[phai];
+
+            // Chốt là phần tử đầu tiên 
+             //HoanDoi(mang, trai, phai);
+             //int chot = mang[phai];
+
+            // Chốt là phần tử giữa 
+             //int mid = trai + (phai - trai) / 2;
+             //HoanDoi(mang, mid, phai);
+             //int chot = mang[phai];
+
+            int i = trai - 1;
 
             for (int j = trai; j < phai; j++)
             {
                 if (mang[j] < chot)
                 {
                     i++;
-                    HoanDoi(mang, i, j); // Hoán đổi phần tử nhỏ hơn chốt về bên trái
+                    HoanDoi(mang, i, j);
                 }
             }
-            HoanDoi(mang, i + 1, phai); // Đưa chốt về đúng vị trí
+            HoanDoi(mang, i + 1, phai);
             return i + 1;
         }
 
-        // Hàm hoán đổi hai phần tử trong mảng
+        // Hàm hoán đổi vị trí hai phần tử trong mảng
         static void HoanDoi(int[] mang, int a, int b)
         {
             int tam = mang[a];
@@ -50,26 +96,74 @@ namespace chương_trình_quick_short
             mang[b] = tam;
         }
 
-        static void Main(string[] args)
+        // Hàm tạo mảng tăng dần 
+        static int[] Mangxuoingaunhien(int size)
         {
-            // Nhập số lượng phần tử trong mảng từ bàn phím
-            Console.WriteLine("Nhập số lượng phần tử trong mảng:");
-            int n = int.Parse(Console.ReadLine());
-            int[] mang = new int[n];
-
-            // Nhập các phần tử của mảng từ bàn phím
-            Console.WriteLine("Nhập các phần tử của mảng:");
-            for (int i = 0; i < n; i++)
+            int[] array = new int[size];
+            for (int i = 0; i < size; i++)
             {
-                mang[i] = int.Parse(Console.ReadLine());
+                array[i] = i + 1;
+            }
+            return array;
+        }
+
+        // Hàm tạo mảng giảm dần 
+        static int[] Mangnguocngaunhien(int size)
+        {
+            int[] array = new int[size];
+            for (int i = 0; i < size; i++)
+            {
+                array[i] = size - i;
+            }
+            return array;
+        }
+
+        // Hàm tạo mảng ngẫu nhiên 
+        static int[] Mangngaunhien(int size)
+        {
+            Random rand = new Random();
+            int[] array = new int[size];
+            for (int i = 0; i < size; i++)
+            {
+                array[i] = rand.Next(1, 100000);
+            }
+            return array;
+        }
+
+        // Hàm kiểm tra thời gian chạy của Quick Sort với từng loại mảng
+        static void Thoigianchay(string testName, int[] array)
+        {
+            Timing timer = new Timing();
+            double totalTime = 0;
+            int iterations = 100;//Số lần lặp lại chương trình
+
+            for (int i = 0; i < iterations; i++)
+            {
+                int[] testArray = (int[])array.Clone();
+                timer.StartTime();
+                QuickSort(testArray, 0, testArray.Length - 1);
+                timer.StopTime();
+                totalTime += timer.Result().TotalMilliseconds;
             }
 
-            // Gọi thuật toán Quick Sort để sắp xếp mảng
-            QuickSort(mang, 0, mang.Length - 1);
+            double averageTime = totalTime / iterations;
+            Console.WriteLine($"{testName}: {averageTime} ms trung bình sau {iterations} lần chạy");
+        }
 
-            // In mảng sau khi sắp xếp
-            Console.WriteLine("Mảng sau khi sắp xếp:");
-            Console.WriteLine(string.Join(" ", mang));
+        static void Main()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            int size = 10000;
+
+            int[] sortedArray = Mangxuoingaunhien(size);
+            int[] reverseSortedArray = Mangnguocngaunhien(size);
+            int[] randomArray = Mangngaunhien(size);
+
+            Console.WriteLine("Đo thời gian QuickSort (100 lần chạy mỗi loại):");
+
+            Thoigianchay("Mảng tăng dần", sortedArray);
+            Thoigianchay("Mảng giảm dần", reverseSortedArray);
+            Thoigianchay("Mảng ngẫu nhiên", randomArray);
         }
     }
 }
